@@ -17,7 +17,8 @@ class TodoModel(QtCore.QAbstractListModel):
   def data(self, index, role):
     if role == Qt.DisplayRole:
       status, text, number = self.todos[index.row()]
-      return text
+      display_text = f"{text} | {number}"
+      return display_text
 
     if role == Qt.DecorationRole:
       status, _, _ = self.todos[index.row()]
