@@ -16,16 +16,17 @@ class TodoModel(QtCore.QAbstractListModel):
 
   def data(self, index, role):
     if role == Qt.DisplayRole:
-      _, text = self.todos[index.row()]
+      status, text, number = self.todos[index.row()]
       return text
 
     if role == Qt.DecorationRole:
-      status, _ = self.todos[index.row()]
+      status, _, _ = self.todos[index.row()]
       if status:
         return tick
 
   def rowCount(self, index):
     return len(self.todos)
+
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -46,9 +47,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     and then clearing it.
     """
     text = self.todoEdit.text()
+    number = self.todoEdit.text()
     if text:  # Don't add empty strings.
       # Access the list via the model.
-      self.model.todos.append((False, text))
+      self.model.todos.append((False, text, number))
       # Trigger refresh.
       self.model.layoutChanged.emit()
       # Empty the input
@@ -72,8 +74,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     if indexes:
       index = indexes[0]
       row = index.row()
-      status, text = self.model.todos[row]
-      self.model.todos[row] = (True, text)
+      status, text, number = self.model.todos[row]
+      self.model.todos[row] = (True, text, number)
       # .dataChanged takes top-left and bottom right, which are equal
       # for a single selection.
       self.model.dataChanged.emit(index, index)
@@ -96,4 +98,4 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
 window.show()
-app.exec_()
+app.exec()
