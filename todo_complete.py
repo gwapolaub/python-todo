@@ -12,24 +12,38 @@ from MainWindow import Ui_MainWindow
 tick = QtGui.QImage("tick.png")
 
 
-class TodoModel(QtCore.QAbstractListModel):
+class TodoModel(QtCore.QAbstractTableModel):
   def __init__(self, todos=None):
     super().__init__()
     self.todos = todos or []
 
   def data(self, index, role):
     if role == Qt.DisplayRole:
-      status, text, number = self.todos[index.row()]
-      display_text = f"{text} | {number}"
-      return display_text
+      value = self.todos[index.row()][index.column()]
+
+      return value
 
     if role == Qt.DecorationRole:
-      status, _, _ = self.todos[index.row()]
-      if status:
-        return tick
+      value = self.todos[index.row()][index.column()]
+      if isinstance(value, bool):
+        if value:
+          return QtGui.QIcon("tick.png")
+
+    if role == Qt.DisplayRole:
+      value = self._data[index.row()][index.column()]
+      return value
+
+    if role == Qt.BackgroundRole:
+      value = self.data[index.row()][index.column()]
+      if isinstance(value, int) or isinstance(value, float):
+        value = int(value)  # Convert to integer for indexing.
+        return QtGui.QColor('#ffbf00')
 
   def rowCount(self, index):
     return len(self.todos)
+
+  def columnCount(self, index):
+    return len(self.todos[0])
 
 
 
