@@ -30,11 +30,11 @@ class TodoModel(QtCore.QAbstractTableModel):
           return QtGui.QIcon("tick.png")
 
     if role == Qt.DisplayRole:
-      value = self._data[index.row()][index.column()]
+      value = self.todos[index.row()][index.column()]
       return value
 
     if role == Qt.BackgroundRole:
-      value = self.data[index.row()][index.column()]
+      value = self.todos[index.row()][index.column()]
       if isinstance(value, int) or isinstance(value, float):
         value = int(value)  # Convert to integer for indexing.
         return QtGui.QColor('#ffbf00')
@@ -64,12 +64,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     Add an item to our todo list, getting the text from the QLineEdit .todoEdit
     and then clearing it.
     """
-    text = self.todoEdit.text()
-    number = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    task_category = "(Other)"
+    task = self.todoEdit.text()
+    task_iteration = 0
+    task_iteration_total = 1
+    is_completed = False
+    created_dttm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if text:  # Don't add empty strings.
+    if task:  # Don't add empty strings.
       # Access the list via the model.
-      self.model.todos.append((False, text, number))
+      self.model.todos.append((is_completed, task_category, task, task_iteration, task_iteration_total, created_dttm))
       # Trigger refresh.
       self.model.layoutChanged.emit()
       # Empty the input
@@ -93,14 +97,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     if indexes:
       index = indexes[0]
       row = index.row()
-      status, text, number = self.model.todos[row]
-      self.model.todos[row] = (True, text, number)
+      is_completed, task_category, task, task_iteration, task_iteration_total, created_dttm = self.model.todos[row]
+      self.model.todos[row] = (True,task_category, task, task_iteration, task_iteration_total, created_dttm)
       # .dataChanged takes top-left and bottom right, which are equal
       # for a single selection.
       self.model.dataChanged.emit(index, index)
       # Clear the selection (as it is no longer valid).
       self.todoView.clearSelection()
       self.save()
+      self.model.layoutChanged.emit()
 
   def load(self):
     try:
