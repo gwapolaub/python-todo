@@ -2,14 +2,17 @@ import json
 import sys
 import datetime
 
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtGui import QPalette, QColor
+from PySide6 import QtCore, QtGui, QtWidgets, QtSvg, QtSvgWidgets
+from PySide6.QtGui import QPalette, QColor, QIcon
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtSvgWidgets import QSvgWidget
 
 from MainWindow import Ui_MainWindow
 
-tick = QtGui.QImage("tick.png")
+pngComplete = QtGui.QImage("tick.png")
+pngNew = QtGui.QImage("tick.png")
+pnginProgress = QtGui.QImage("tick.png")
 
 
 class TodoModel(QtCore.QAbstractTableModel):
@@ -25,9 +28,22 @@ class TodoModel(QtCore.QAbstractTableModel):
 
     if role == Qt.DecorationRole:
       value = self.todos[index.row()][index.column()]
-      if isinstance(value, bool):
-        if value:
-          return QtGui.QIcon("tick.png")
+
+      if index.column() == 0:
+        # Load the svg
+        renderer = QtSvg.QSvgRenderer('error-404.svg')
+        # Prepare a QImage with desired characteritisc
+        self.orig_svg = QtGui.QImage(500, 500, QtGui.QImage.Format_ARGB32);
+        # Get QPainter that paints to the image
+        painter = QtGui.QPainter(self.orig_svg);
+        renderer.render(painter);
+
+        #return QIcon("tick.png").pixmap(QSize())
+
+        #return QIcon("tick.png").toImage()
+        #return QIcon("error-404.svg").toImage()
+        #return QtGui.setIcon(self.orig_svg)
+        return QtGui.QIcon(QtGui.QPixmap.fromImage(self.orig_svg))
 
     if role == Qt.DisplayRole:
       value = self.todos[index.row()][index.column()]
@@ -37,7 +53,8 @@ class TodoModel(QtCore.QAbstractTableModel):
       value = self.todos[index.row()][index.column()]
       if isinstance(value, int) or isinstance(value, float):
         value = int(value)  # Convert to integer for indexing.
-        return QtGui.QColor('#ffbf00')
+        return QtGui.QColor('#2166ac')
+
 
   def rowCount(self, index):
     return len(self.todos)
@@ -55,6 +72,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     self.model = TodoModel()
     self.load()
     self.todoView.setModel(self.model)
+    self.todoView.setStyleSheet("background-color: transparent, alternate-background-color")
     self.addButton.pressed.connect(self.add)
     self.deleteButton.pressed.connect(self.delete)
     self.completeButton.pressed.connect(self.complete)
@@ -68,12 +86,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     task = self.todoEdit.text()
     task_iteration = 0
     task_iteration_total = 1
-    is_completed = False
+    completion_type_id = 0 #0 = new, 1 = in progress, 2 =  complete
     created_dttm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if task:  # Don't add empty strings.
       # Access the list via the model.
-      self.model.todos.append((is_completed, task_category, task, task_iteration, task_iteration_total, created_dttm))
+      self.model.todos.append((completion_type_id, task_category, task, task_iteration, task_iteration_total, created_dttm))
       # Trigger refresh.
       self.model.layoutChanged.emit()
       # Empty the input
@@ -97,8 +115,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     if indexes:
       index = indexes[0]
       row = index.row()
-      is_completed, task_category, task, task_iteration, task_iteration_total, created_dttm = self.model.todos[row]
-      self.model.todos[row] = (True,task_category, task, task_iteration, task_iteration_total, created_dttm)
+      completion_type_id, task_category, task, task_iteration, task_iteration_total, created_dttm = self.model.todos[row]
+
+      #Increments iteration counts (allows for over-incrementing iterations for tracking purposes)
+      #task_iteration = task_iteration + 1
+      #if task_iteration < task_iteration_total:
+
+      #On completion, check iteration counts vs total
+      #update icons (new, in progress, complete)
+
+      self.model.todos[row] = (1,task_category, task, task_iteration + 1, task_iteration_total, created_dttm)
       # .dataChanged takes top-left and bottom right, which are equal
       # for a single selection.
       self.model.dataChanged.emit(index, index)

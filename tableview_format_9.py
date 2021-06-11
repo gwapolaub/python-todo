@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+import pandas as pd
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt
@@ -15,7 +16,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def data(self, index, role):
         if role == Qt.DecorationRole:
-            value = self._data[index.row()][index.column()]
+            value = self._data[index.row(),index.column()]
             if isinstance(value, bool):
                 if value:
                     return QtGui.QIcon("tick.png")
@@ -23,7 +24,7 @@ class TableModel(QtCore.QAbstractTableModel):
                 return QtGui.QIcon("cross.png")
 
         if role == Qt.DisplayRole:
-            value = self._data[index.row()][index.column()]
+            value = self._data[index.row(),index.column()]
             if isinstance(value, datetime):
                 return value.strftime("%Y-%m-%d")
 

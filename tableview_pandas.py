@@ -30,7 +30,20 @@ class TableModel(QtCore.QAbstractTableModel):
                 return str(self._data.index[section])
 
 
+def highlight_cols(x):
+    #copy df to new - original data are not changed
+    df = x.copy()
+    #select all values to default value - red color
+    df.loc[:,:] = 'background-color: red'
+    #overwrite values grey color
+    df[['B','C']] = 'background-color: grey'
+    #return color df
+    return df
+
+
+
 class MainWindow(QtWidgets.QMainWindow):
+
     def __init__(self):
         super().__init__()
 
@@ -42,14 +55,17 @@ class MainWindow(QtWidgets.QMainWindow):
             index=["Row 1", "Row 2", "Row 3", "Row 4", "Row 5"],
         )
 
+
+
         self.model = TableModel(data)
         self.table.setModel(self.model)
 
         self.setCentralWidget(self.table)
         self.setGeometry(600, 100, 400, 200)
+        self.table.setStyleSheet("background-color: green; border: 1px solid blue; ")
 
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
 window.show()
-app.exec_()
+app.exec()
