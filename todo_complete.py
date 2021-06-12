@@ -10,10 +10,13 @@ from PySide6.QtSvgWidgets import QSvgWidget
 
 from MainWindow import Ui_MainWindow
 
-pngComplete = QtGui.QImage("tick.png")
-pngNew = QtGui.QImage("tick.png")
-pnginProgress = QtGui.QImage("tick.png")
-
+def statusIcon(i):
+  switcher = {
+    #0: 'new.gif',
+    1: 'inprogress.png',
+    2: 'checked.png'
+  }
+  return switcher.get(i)
 
 class TodoModel(QtCore.QAbstractTableModel):
   def __init__(self, todos=None):
@@ -30,20 +33,24 @@ class TodoModel(QtCore.QAbstractTableModel):
       value = self.todos[index.row()][index.column()]
 
       if index.column() == 0:
+
         # Load the svg
-        renderer = QtSvg.QSvgRenderer('error-404.svg')
+        #renderer = QtSvg.QSvgRenderer(statusIcon(value))
+        #renderer.framesPerSecond()
+        #renderer.animated()
         # Prepare a QImage with desired characteritisc
-        self.orig_svg = QtGui.QImage(500, 500, QtGui.QImage.Format_ARGB32);
+        #self.orig_svg = QtGui.QImage(500, 500, QtGui.QImage.Format_ARGB32)
         # Get QPainter that paints to the image
-        painter = QtGui.QPainter(self.orig_svg);
-        renderer.render(painter);
+        #painter = QtGui.QPainter(self.orig_svg)
+        #renderer.render(painter)
 
         #return QIcon("tick.png").pixmap(QSize())
 
         #return QIcon("tick.png").toImage()
         #return QIcon("error-404.svg").toImage()
         #return QtGui.setIcon(self.orig_svg)
-        return QtGui.QIcon(QtGui.QPixmap.fromImage(self.orig_svg))
+        #return QtGui.QIcon(QtGui.QPixmap.fromImage(self.orig_svg))
+        return QIcon(statusIcon(value))
 
     if role == Qt.DisplayRole:
       value = self.todos[index.row()][index.column()]
@@ -118,13 +125,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
       completion_type_id, task_category, task, task_iteration, task_iteration_total, created_dttm = self.model.todos[row]
 
       #Increments iteration counts (allows for over-incrementing iterations for tracking purposes)
-      #task_iteration = task_iteration + 1
+      if completion_type_id == 0:
+        #task_iteration = task_iteration + 1
+        completion_type_id = 1
+      elif completion_type_id == 1 and task_iteration < task_iteration_total:
+        task_iteration = task_iteration + 1
+        if task_iteration >= task_iteration_total:
+          completion_type_id = 2
+      elif task_iteration >= task_iteration_total:
+        completion_type_id = 2
+        task_iteration = task_iteration + 1
       #if task_iteration < task_iteration_total:
 
       #On completion, check iteration counts vs total
       #update icons (new, in progress, complete)
 
-      self.model.todos[row] = (1,task_category, task, task_iteration + 1, task_iteration_total, created_dttm)
+      self.model.todos[row] = (completion_type_id,task_category, task, task_iteration, task_iteration_total, created_dttm)
       # .dataChanged takes top-left and bottom right, which are equal
       # for a single selection.
       self.model.dataChanged.emit(index, index)
